@@ -1,0 +1,8 @@
+com\example\karaoke\controller\QueueController.class
+com\example\karaoke\controller\SongController.class
+com\example\karaoke\service\KaraokeService.class
+com\example\karaoke\model\Song.class
+com\example\karaoke\service\SongDatabaseInitializer.class
+com\example\karaoke\model\QueueItem.class
+com\example\karaoke\service\KaraokeService$1.class
+com\example\karaoke\KaraokeApplication.class
