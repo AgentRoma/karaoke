@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: karaoke-club
+    env: docker
+    region: frankfurt
+    plan: free
