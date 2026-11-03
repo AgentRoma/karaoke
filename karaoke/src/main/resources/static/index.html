@@ -57,7 +57,7 @@
         </div>
 
         <div class="flex gap-2 mb-2 flex-shrink-0">
-            <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Szukaj piosenki lub wykonawcy (np. Sanah, AC/DC)..."
+            <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Wpisz tytuł lub wykonawcę (np. Sanah)..."
                    class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
 
             <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
@@ -71,18 +71,18 @@
             <p class="text-[11px] text-zinc-400 mb-1 font-semibold">Filtruj według języka:</p>
             <div id="langButtons" class="flex flex-wrap gap-1.5">
                 <button onclick="filterByLang('')" class="lang-btn active bg-pink-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="">Wszystkie</button>
-                <button onclick="filterByLang('PL')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="PL">PL Polski</button>
-                <button onclick="filterByLang('EN')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="EN">GB Angielski</button>
+                <button onclick="filterByLang('PL')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="PL">🇵🇱 Polski</button>
+                <button onclick="filterByLang('EN')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="EN">🇬🇧 Angielski</button>
                 <button onclick="filterByLang('RU')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="RU">RU Rosyjski</button>
-                <button onclick="filterByLang('UA')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="UA">UA Ukraiński</button>
-                <button onclick="filterByLang('FR')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="FR">FR Francuski</button>
-                <button onclick="filterByLang('ES')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="ES">ES Hiszpański</button>
+                <button onclick="filterByLang('UA')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="UA">🇺🇦 Ukraiński</button>
+                <button onclick="filterByLang('FR')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="FR">🇫🇷 Francuski</button>
+                <button onclick="filterByLang('ES')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="ES">🇪🇸 Hiszpański</button>
             </div>
         </div>
 
         <!-- SPISOK PESEN S POLZUNKOM -->
         <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2 min-h-0">
-            <!-- Generowane w JS -->
+            <div class="text-center text-zinc-500 py-16 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>
         </div>
     </section>
 
@@ -122,7 +122,6 @@
     let currentMode = 'guest';
 
     document.addEventListener('DOMContentLoaded', () => {
-        fetchSongs();
         fetchQueue();
         setInterval(fetchQueue, 3000);
     });
@@ -155,7 +154,6 @@
         } else {
             leftSection.style.display = 'flex';
             queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300";
-            fetchSongs();
         }
 
         fetchQueue();
@@ -179,12 +177,19 @@
         const query = document.getElementById('searchInput').value.trim();
         const source = document.getElementById('sourceSelect').value;
 
+        const list = document.getElementById('songsList');
+
+        // Если ничего не введено и не выбран язык — не грузим всю базу на телефон
+        if (!query && !source && !currentLang) {
+            list.innerHTML = `<div class="text-center text-zinc-500 py-16 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>`;
+            return;
+        }
+
         const url = `/api/songs?query=${encodeURIComponent(query)}&source=${encodeURIComponent(source)}&language=${encodeURIComponent(currentLang)}`;
 
         fetch(url)
             .then(res => res.json())
             .then(songs => {
-                const list = document.getElementById('songsList');
                 list.innerHTML = '';
 
                 if (!songs || songs.length === 0) {
@@ -192,7 +197,10 @@
                     return;
                 }
 
-                songs.forEach(song => {
+                // Ограничим вывод максимум 100 результатами, чтобы телефон не зависал
+                const limitedSongs = songs.slice(0, 100);
+
+                limitedSongs.forEach(song => {
                     const card = document.createElement('div');
                     card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between hover:border-pink-600/50 transition";
                     card.innerHTML = `
