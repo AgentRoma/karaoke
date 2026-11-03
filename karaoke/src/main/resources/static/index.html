@@ -31,69 +31,93 @@
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="h-screen overflow-hidden p-3 md:p-5 flex flex-col justify-between box-border">
 
-<header class="text-center mb-8">
-    <h1 class="text-4xl md:text-5xl font-black tracking-wider text-pink-500 neon-glow uppercase flex items-center justify-center gap-3">
+<!-- NAGŁÓWEK -->
+<header class="text-center mb-3 flex-shrink-0">
+    <h1 class="text-3xl md:text-4xl font-black tracking-wider text-pink-500 neon-glow uppercase flex items-center justify-center gap-3">
         🎤 GLAM 2.0 CLUB KARAOKE
     </h1>
-    <div class="mt-4 flex justify-center gap-4">
-        <button onclick="switchTab('guest')" id="btnGuest" class="bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg hover:bg-pink-500 transition">Gość</button>
-        <button onclick="switchTab('admin')" id="btnAdmin" class="bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition">Panel Admina</button>
+    <div class="mt-2 flex justify-center gap-4">
+        <button onclick="switchTab('guest')" id="btnGuest" class="bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg hover:bg-pink-500 transition text-sm">Gość</button>
+        <button onclick="switchTab('admin')" id="btnAdmin" class="bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm">Panel Admina</button>
     </div>
 </header>
 
-<main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- GŁÓWNA SEKCJA (WYSZUKIWARKA & KOLEJKA) -->
+<main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0 mb-3">
 
-    <!-- LEWA SEKCJA: WYSZUKIWARKA -->
-    <section id="leftSection" class="lg:col-span-7 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px]">
-        <h2 class="text-2xl font-bold text-pink-400 mb-4">Wybierz piosenkę</h2>
+    <!-- LEWA SEKCJA: WYSZUKIWARKA I LISTA PIOSENEK -->
+    <section id="leftSection" class="lg:col-span-7 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0">
+        <h2 class="text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Wybierz piosenkę</h2>
 
-        <div class="mb-3">
+        <div class="mb-2 flex-shrink-0">
             <input type="text" id="userNameInput" placeholder="Twoje imię / Stolik (np. Roma)"
-                   class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-3 text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+                   class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
         </div>
 
-        <div class="flex gap-2 mb-4">
+        <div class="flex gap-2 mb-2 flex-shrink-0">
             <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Szukaj piosenki lub wykonawcy (np. Sanah, AC/DC)..."
-                   class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-3 text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+                   class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
 
-            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-3 py-3 text-pink-300 focus:outline-none focus:border-pink-500 transition">
+            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
                 <option value="">Wszystkie bazy</option>
                 <option value="iSing">iSing</option>
                 <option value="Karafan">Karafan</option>
             </select>
         </div>
 
-        <div class="mb-4">
-            <p class="text-xs text-zinc-400 mb-2 font-semibold">Filtruj według języka:</p>
-            <div id="langButtons" class="flex flex-wrap gap-2">
-                <button onclick="filterByLang('')" class="lang-btn active bg-pink-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="">Wszystkie</button>
-                <button onclick="filterByLang('PL')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="PL">🇵🇱 Polski</button>
-                <button onclick="filterByLang('EN')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="EN">🇬🇧 Angielski</button>
-                <button onclick="filterByLang('RU')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="RU">🪆 Rosyjski</button>
-                <button onclick="filterByLang('UA')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="UA">🇺🇦 Ukraiński</button>
-                <button onclick="filterByLang('FR')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="FR">🇫🇷 Francuski</button>
-                <button onclick="filterByLang('ES')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="ES">🇪🇸 Hiszpański</button>
+        <div class="mb-2 flex-shrink-0">
+            <p class="text-[11px] text-zinc-400 mb-1 font-semibold">Filtruj według języka:</p>
+            <div id="langButtons" class="flex flex-wrap gap-1.5">
+                <button onclick="filterByLang('')" class="lang-btn active bg-pink-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="">Wszystkie</button>
+                <button onclick="filterByLang('PL')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="PL">PL Polski</button>
+                <button onclick="filterByLang('EN')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="EN">GB Angielski</button>
+                <button onclick="filterByLang('RU')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="RU">RU Rosyjski</button>
+                <button onclick="filterByLang('UA')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="UA">UA Ukraiński</button>
+                <button onclick="filterByLang('FR')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="FR">FR Francuski</button>
+                <button onclick="filterByLang('ES')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition" data-lang="ES">ES Hiszpański</button>
             </div>
         </div>
 
-        <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+        <!-- SPISOK PESEN S POLZUNKOM -->
+        <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2 min-h-0">
             <!-- Generowane w JS -->
         </div>
     </section>
 
-    <!-- SEKCJA AKTUALNEJ KOLEJKI -->
-    <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300">
-        <h2 class="text-2xl font-bold text-pink-400 mb-4">Aktualna Kolejka</h2>
-        <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+    <!-- SEKCJA KOLEJKI -->
+    <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300">
+        <h2 class="text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Aktualna Kolejka</h2>
+        <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2 min-h-0">
             <!-- Generowane w JS -->
         </div>
     </section>
+
 </main>
 
+<!-- DOLNY PASEK Z DUŻYM KODEM QR -->
+<footer class="max-w-7xl mx-auto w-full flex-shrink-0">
+    <div class="bg-zinc-950/90 border border-pink-500/40 rounded-2xl p-3 md:p-4 box-glow flex flex-row items-center justify-between gap-4">
+        <div>
+            <h3 class="text-lg md:text-2xl font-black text-pink-400 uppercase tracking-wider flex items-center gap-2">
+                <span>📸</span> Prowadzący karaoke
+            </h3>
+            <p class="text-xs md:text-sm text-zinc-300 mt-1 max-w-lg">
+                Zeskanuj kod QR aparatem w telefonie, aby przejść do Instagrama!
+            </p>
+        </div>
+
+        <a href="https://www.instagram.com/denis_wozniak_official/?utm_source=ig_web_button_share_sheet"
+           target="_blank" rel="noopener noreferrer"
+           class="block p-2 bg-white rounded-xl border-2 border-pink-500 hover:scale-105 transition transform duration-200 shadow-xl flex-shrink-0">
+            <img src="/images/denis_wozniak_official_qr.png" alt="Instagram QR Code" class="w-32 h-32 md:w-40 md:h-40 object-contain rounded-lg" />
+        </a>
+    </div>
+</footer>
+
 <script>
-    const ADMIN_PASSWORD = "1234";
+    const ADMIN_PASSWORD = "DenisGlam";
     let currentLang = '';
     let currentMode = 'guest';
     let activePlayerWindow = null;
@@ -116,22 +140,22 @@
         currentMode = mode;
 
         document.getElementById('btnGuest').className = mode === 'guest'
-            ? "bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg transition"
-            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition";
+            ? "bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg transition text-sm"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
 
         document.getElementById('btnAdmin').className = mode === 'admin'
-            ? "bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg transition"
-            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition";
+            ? "bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg transition text-sm"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
 
         const leftSection = document.getElementById('leftSection');
         const queueSection = document.getElementById('queueSection');
 
         if (mode === 'admin') {
             leftSection.style.display = 'none';
-            queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300";
+            queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300";
         } else {
             leftSection.style.display = 'flex';
-            queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300";
+            queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300";
             fetchSongs();
         }
 
@@ -142,9 +166,9 @@
         currentLang = lang;
         document.querySelectorAll('.lang-btn').forEach(btn => {
             if (btn.getAttribute('data-lang') === lang) {
-                btn.className = "lang-btn bg-pink-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition";
+                btn.className = "lang-btn bg-pink-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg transition";
             } else {
-                btn.className = "lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition";
+                btn.className = "lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition";
             }
         });
         fetchSongs();
@@ -164,28 +188,30 @@
                 const list = document.getElementById('songsList');
                 list.innerHTML = '';
 
-                if (songs.length === 0) {
+                if (!songs || songs.length === 0) {
                     list.innerHTML = `<div class="text-center text-zinc-500 py-10">Brak utworu w bazie...</div>`;
                     return;
                 }
 
                 songs.forEach(song => {
                     const card = document.createElement('div');
-                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between hover:border-pink-600/50 transition";
+                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between hover:border-pink-600/50 transition";
                     card.innerHTML = `
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold text-pink-100 text-lg">${song.title}</h3>
-                                <span class="text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded">${song.language}</span>
+                                <h3 class="font-bold text-pink-100 text-base">${song.title}</h3>
+                                <span class="text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded">${song.language || 'PL'}</span>
                             </div>
-                            <p class="text-sm text-zinc-400 mt-1">${song.artist} • <span class="text-pink-500">${song.source}</span></p>
+                            <p class="text-xs text-zinc-400 mt-0.5">${song.artist} • <span class="text-pink-500">${song.source}</span></p>
                         </div>
-                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-5 py-2 rounded-lg transition text-sm">Zamów</button>
+                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-1.5 rounded-lg transition text-xs">Zamów</button>
                     `;
                     list.appendChild(card);
                 });
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error("Błąd pobierania piosenek:", err);
+            });
     }
 
     function orderSong(songId) {
@@ -213,36 +239,39 @@
                 const list = document.getElementById('queueList');
                 list.innerHTML = '';
 
-                if (queue.length === 0) {
+                if (!queue || queue.length === 0) {
                     list.innerHTML = `<div class="text-center text-zinc-500 py-10">Kolejka jest pusta.</div>`;
                     return;
                 }
 
                 queue.forEach(item => {
                     const card = document.createElement('div');
-                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between";
+                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between";
 
                     let adminControls = '';
                     if (currentMode === 'admin') {
                         const escapedUrl = item.song.url ? item.song.url.replace(/'/g, "\\'") : '';
                         adminControls = `
                             <div class="flex gap-2">
-                                <button onclick="updateStatus(${item.id}, 'PLAYING', '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-2 rounded-lg font-bold transition">Graj</button>
-                                <button onclick="removeFromQueue(${item.id})" class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg font-bold transition">Usuń</button>
+                                <button onclick="updateStatus(${item.id}, 'PLAYING', '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">Graj</button>
+                                <button onclick="removeFromQueue(${item.id})" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition">Usuń</button>
                             </div>
                         `;
                     }
 
                     card.innerHTML = `
                         <div>
-                            <h4 class="font-bold text-pink-200 text-lg">${item.song.title}</h4>
+                            <h4 class="font-bold text-pink-200 text-base">${item.song.title}</h4>
                             <p class="text-xs text-zinc-300 mt-0.5">Wykonawca: <span class="text-pink-400 font-semibold">${item.song.artist}</span></p>
-                            <p class="text-xs text-zinc-400 mt-1">Zamówił: <span class="text-pink-300 font-semibold">${item.userName}</span> | Źródło: <span class="text-pink-500 font-bold">${item.song.source}</span> | Status: <span class="text-yellow-400 font-bold">${item.status}</span></p>
+                            <p class="text-[11px] text-zinc-400 mt-1">Zamówił: <span class="text-pink-300 font-semibold">${item.userName}</span> | Status: <span class="text-yellow-400 font-bold">${item.status}</span></p>
                         </div>
                         ${adminControls}
                     `;
                     list.appendChild(card);
                 });
+            })
+            .catch(err => {
+                console.error("Błąd pobierania kolejki:", err);
             });
     }
 
@@ -253,8 +282,7 @@
                 if (status === 'PLAYING') {
                     const targetUrl = (songUrl && songUrl.startsWith('http')) ? songUrl : 'https://www.google.com';
 
-                    // Bezpieczne otwarcie / podmienianie okna bez blokady CORS
-                    if (!activePlayerWindow || activePlayerWindow.closed) {
+                    if (!activePlayerWindow || activePlayerWindow.Closed) {
                         activePlayerWindow = window.open(targetUrl, 'karaokePlayerWindow');
                     } else {
                         activePlayerWindow.close();
