@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLAM 2.0 Club Karaoke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #f4f4f5;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px #ff2a85, 0 0 20px #ff2a85, 0 0 40px #ff2a85;
+        }
+        .box-glow {
+            box-shadow: 0 0 15px rgba(255, 42, 133, 0.15);
+            border: 1px solid rgba(255, 42, 133, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #121212;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #ff2a85;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+<header class="text-center mb-8">
+    <h1 class="text-4xl md:text-5xl font-black tracking-wider text-pink-500 neon-glow uppercase flex items-center justify-center gap-3">
+        🎤 GLAM 2.0 CLUB KARAOKE
+    </h1>
+    <div class="mt-4 flex justify-center gap-4">
+        <button onclick="switchTab('guest')" id="btnGuest" class="bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg hover:bg-pink-500 transition">Gość</button>
+        <button onclick="switchTab('admin')" id="btnAdmin" class="bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition">Panel Admina</button>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- LEWA SEKCJA: WYSZUKIWARKA -->
+    <section id="leftSection" class="lg:col-span-7 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px]">
+        <h2 class="text-2xl font-bold text-pink-400 mb-4">Wybierz piosenkę</h2>
+
+        <div class="mb-3">
+            <input type="text" id="userNameInput" placeholder="Twoje imię / Stolik (np. Roma)"
+                   class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-3 text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+        </div>
+
+        <div class="flex gap-2 mb-4">
+            <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Szukaj piosenki lub wykonawcy (np. Sanah, AC/DC)..."
+                   class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-3 text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+
+            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-3 py-3 text-pink-300 focus:outline-none focus:border-pink-500 transition">
+                <option value="">Wszystkie bazy</option>
+                <option value="iSing">iSing</option>
+                <option value="Karafan">Karafan</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <p class="text-xs text-zinc-400 mb-2 font-semibold">Filtruj według języka:</p>
+            <div id="langButtons" class="flex flex-wrap gap-2">
+                <button onclick="filterByLang('')" class="lang-btn active bg-pink-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="">Wszystkie</button>
+                <button onclick="filterByLang('PL')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="PL">🇵🇱 Polski</button>
+                <button onclick="filterByLang('EN')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="EN">🇬🇧 Angielski</button>
+                <button onclick="filterByLang('RU')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="RU">🪆 Rosyjski</button>
+                <button onclick="filterByLang('UA')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="UA">🇺🇦 Ukraiński</button>
+                <button onclick="filterByLang('FR')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="FR">🇫🇷 Francuski</button>
+                <button onclick="filterByLang('ES')" class="lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition" data-lang="ES">🇪🇸 Hiszpański</button>
+            </div>
+        </div>
+
+        <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+            <!-- Generowane w JS -->
+        </div>
+    </section>
+
+    <!-- SEKCJA AKTUALNEJ KOLEJKI -->
+    <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300">
+        <h2 class="text-2xl font-bold text-pink-400 mb-4">Aktualna Kolejka</h2>
+        <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+            <!-- Generowane w JS -->
+        </div>
+    </section>
+</main>
+
+<script>
+    const ADMIN_PASSWORD = "1234";
+    let currentLang = '';
+    let currentMode = 'guest';
+    let activePlayerWindow = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchSongs();
+        fetchQueue();
+        setInterval(fetchQueue, 3000);
+    });
+
+    function switchTab(mode) {
+        if (mode === 'admin' && currentMode !== 'admin') {
+            const inputPassword = prompt("Wprowadź hasło Administratora:");
+            if (inputPassword !== ADMIN_PASSWORD) {
+                alert("Nieprawidłowe hasło!");
+                return;
+            }
+        }
+
+        currentMode = mode;
+
+        document.getElementById('btnGuest').className = mode === 'guest'
+            ? "bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg transition"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition";
+
+        document.getElementById('btnAdmin').className = mode === 'admin'
+            ? "bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow-lg transition"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-2 rounded-full hover:bg-pink-950 transition";
+
+        const leftSection = document.getElementById('leftSection');
+        const queueSection = document.getElementById('queueSection');
+
+        if (mode === 'admin') {
+            leftSection.style.display = 'none';
+            queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300";
+        } else {
+            leftSection.style.display = 'flex';
+            queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-6 rounded-2xl box-glow flex flex-col h-[700px] transition-all duration-300";
+            fetchSongs();
+        }
+
+        fetchQueue();
+    }
+
+    function filterByLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.getAttribute('data-lang') === lang) {
+                btn.className = "lang-btn bg-pink-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition";
+            } else {
+                btn.className = "lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-3 py-1.5 rounded-lg transition";
+            }
+        });
+        fetchSongs();
+    }
+
+    function fetchSongs() {
+        if (currentMode === 'admin') return;
+
+        const query = document.getElementById('searchInput').value.trim();
+        const source = document.getElementById('sourceSelect').value;
+
+        const url = `/api/songs?query=${encodeURIComponent(query)}&source=${encodeURIComponent(source)}&language=${encodeURIComponent(currentLang)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(songs => {
+                const list = document.getElementById('songsList');
+                list.innerHTML = '';
+
+                if (songs.length === 0) {
+                    list.innerHTML = `<div class="text-center text-zinc-500 py-10">Brak utworu w bazie...</div>`;
+                    return;
+                }
+
+                songs.forEach(song => {
+                    const card = document.createElement('div');
+                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between hover:border-pink-600/50 transition";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-pink-100 text-lg">${song.title}</h3>
+                                <span class="text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded">${song.language}</span>
+                            </div>
+                            <p class="text-sm text-zinc-400 mt-1">${song.artist} • <span class="text-pink-500">${song.source}</span></p>
+                        </div>
+                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-5 py-2 rounded-lg transition text-sm">Zamów</button>
+                    `;
+                    list.appendChild(card);
+                });
+            })
+            .catch(err => console.error(err));
+    }
+
+    function orderSong(songId) {
+        const userName = document.getElementById('userNameInput').value.trim();
+        if (!userName) {
+            alert("Proszę wpisać swoje imię lub numer stolika w górnym polu!");
+            return;
+        }
+
+        fetch(`/api/queue?songId=${songId}&userName=${encodeURIComponent(userName)}`, { method: 'POST' })
+            .then(res => {
+                if (res.ok) {
+                    fetchQueue();
+                    alert("Pomyślnie dodano piosenkę do kolejki!");
+                } else {
+                    alert("Błąd podczas dodawania piosenki.");
+                }
+            });
+    }
+
+    function fetchQueue() {
+        fetch('/api/queue')
+            .then(res => res.json())
+            .then(queue => {
+                const list = document.getElementById('queueList');
+                list.innerHTML = '';
+
+                if (queue.length === 0) {
+                    list.innerHTML = `<div class="text-center text-zinc-500 py-10">Kolejka jest pusta.</div>`;
+                    return;
+                }
+
+                queue.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between";
+
+                    let adminControls = '';
+                    if (currentMode === 'admin') {
+                        const escapedUrl = item.song.url ? item.song.url.replace(/'/g, "\\'") : '';
+                        adminControls = `
+                            <div class="flex gap-2">
+                                <button onclick="updateStatus(${item.id}, 'PLAYING', '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-2 rounded-lg font-bold transition">Graj</button>
+                                <button onclick="removeFromQueue(${item.id})" class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg font-bold transition">Usuń</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div>
+                            <h4 class="font-bold text-pink-200 text-lg">${item.song.title}</h4>
+                            <p class="text-xs text-zinc-300 mt-0.5">Wykonawca: <span class="text-pink-400 font-semibold">${item.song.artist}</span></p>
+                            <p class="text-xs text-zinc-400 mt-1">Zamówił: <span class="text-pink-300 font-semibold">${item.userName}</span> | Źródło: <span class="text-pink-500 font-bold">${item.song.source}</span> | Status: <span class="text-yellow-400 font-bold">${item.status}</span></p>
+                        </div>
+                        ${adminControls}
+                    `;
+                    list.appendChild(card);
+                });
+            });
+    }
+
+    function updateStatus(id, status, songUrl) {
+        fetch(`/api/queue/${id}/status?status=${status}`, { method: 'PUT' })
+            .then(() => {
+                fetchQueue();
+                if (status === 'PLAYING') {
+                    const targetUrl = (songUrl && songUrl.startsWith('http')) ? songUrl : 'https://www.google.com';
+
+                    // Bezpieczne otwarcie / podmienianie okna bez blokady CORS
+                    if (!activePlayerWindow || activePlayerWindow.closed) {
+                        activePlayerWindow = window.open(targetUrl, 'karaokePlayerWindow');
+                    } else {
+                        activePlayerWindow.close();
+                        activePlayerWindow = window.open(targetUrl, 'karaokePlayerWindow');
+                    }
+                    if (activePlayerWindow) {
+                        activePlayerWindow.focus();
+                    }
+                }
+            });
+    }
+
+    function removeFromQueue(id) {
+        fetch(`/api/queue/${id}`, { method: 'DELETE' }).then(() => fetchQueue());
+    }
+</script>
+</body>
+</html>
