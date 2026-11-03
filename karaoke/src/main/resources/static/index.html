@@ -52,7 +52,7 @@
         <h2 class="text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Wybierz piosenkę</h2>
 
         <div class="mb-2 flex-shrink-0">
-            <input type="text" id="userNameInput" placeholder="Twoje imię / Stolik (np. Roma)"
+            <input type="text" id="userNameInput" placeholder="Napisz imię / Stolik"
                    class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
         </div>
 
@@ -120,7 +120,6 @@
     const ADMIN_PASSWORD = "DenisGlam";
     let currentLang = '';
     let currentMode = 'guest';
-    let activePlayerWindow = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchSongs();
@@ -209,9 +208,7 @@
                     list.appendChild(card);
                 });
             })
-            .catch(err => {
-                console.error("Błąd pobierania piosenek:", err);
-            });
+            .catch(err => console.error("Błąd pobierania piosenek:", err));
     }
 
     function orderSong(songId) {
@@ -253,7 +250,7 @@
                         const escapedUrl = item.song.url ? item.song.url.replace(/'/g, "\\'") : '';
                         adminControls = `
                             <div class="flex gap-2">
-                                <button onclick="updateStatus(${item.id}, 'PLAYING', '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">Graj</button>
+                                <button onclick="playSong(${item.id}, '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">Graj</button>
                                 <button onclick="removeFromQueue(${item.id})" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition">Usuń</button>
                             </div>
                         `;
@@ -270,29 +267,16 @@
                     list.appendChild(card);
                 });
             })
-            .catch(err => {
-                console.error("Błąd pobierania kolejki:", err);
-            });
+            .catch(err => console.error("Błąd pobierania kolejki:", err));
     }
 
-    function updateStatus(id, status, songUrl) {
-        fetch(`/api/queue/${id}/status?status=${status}`, { method: 'PUT' })
-            .then(() => {
-                fetchQueue();
-                if (status === 'PLAYING') {
-                    const targetUrl = (songUrl && songUrl.startsWith('http')) ? songUrl : 'https://www.google.com';
+    function playSong(id, songUrl) {
+        const targetUrl = (songUrl && songUrl.startsWith('http')) ? songUrl : 'https://www.google.com';
 
-                    if (!activePlayerWindow || activePlayerWindow.Closed) {
-                        activePlayerWindow = window.open(targetUrl, 'karaokePlayerWindow');
-                    } else {
-                        activePlayerWindow.close();
-                        activePlayerWindow = window.open(targetUrl, 'karaokePlayerWindow');
-                    }
-                    if (activePlayerWindow) {
-                        activePlayerWindow.focus();
-                    }
-                }
-            });
+        window.open(targetUrl, 'karaokePlayerWindow');
+
+        fetch(`/api/queue/${id}/status?status=PLAYING`, { method: 'PUT' })
+            .then(() => fetchQueue());
     }
 
     function removeFromQueue(id) {
