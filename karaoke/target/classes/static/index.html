@@ -19,7 +19,7 @@
             border: 1px solid rgba(255, 42, 133, 0.3);
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #121212;
@@ -31,25 +31,25 @@
         }
     </style>
 </head>
-<body class="h-screen overflow-hidden p-3 md:p-5 flex flex-col justify-between box-border">
+<body class="min-h-screen p-3 md:p-5 flex flex-col justify-between box-border">
 
 <!-- NAGŁÓWEK -->
-<header class="text-center mb-3 flex-shrink-0">
-    <h1 class="text-3xl md:text-4xl font-black tracking-wider text-pink-500 neon-glow uppercase flex items-center justify-center gap-3">
+<header class="text-center mb-4 flex-shrink-0">
+    <h1 class="text-2xl md:text-4xl font-black tracking-wider text-pink-500 neon-glow uppercase flex items-center justify-center gap-2">
         🎤 GLAM 2.0 CLUB KARAOKE
     </h1>
-    <div class="mt-2 flex justify-center gap-4">
-        <button onclick="switchTab('guest')" id="btnGuest" class="bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg hover:bg-pink-500 transition text-sm">Gość</button>
-        <button onclick="switchTab('admin')" id="btnAdmin" class="bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm">Panel Admina</button>
+    <div class="mt-3 flex justify-center gap-3">
+        <button onclick="switchTab('guest')" id="btnGuest" class="bg-pink-600 text-white font-bold px-5 py-1.5 rounded-full shadow-lg hover:bg-pink-500 transition text-sm">Gość</button>
+        <button onclick="switchTab('admin')" id="btnAdmin" class="bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-5 py-1.5 rounded-full hover:bg-pink-950 transition text-sm">Panel Admina</button>
     </div>
 </header>
 
 <!-- GŁÓWNA SEKCJA (WYSZUKIWARKA & KOLEJKA) -->
-<main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0 mb-3">
+<main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 mb-4">
 
     <!-- LEWA SEKCJA: WYSZUKIWARKA I LISTA PIOSENEK -->
-    <section id="leftSection" class="lg:col-span-7 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0">
-        <h2 class="text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Wybierz piosenkę</h2>
+    <section id="leftSection" class="lg:col-span-7 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[500px] lg:h-[600px]">
+        <h2 class="text-lg md:text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Wybierz piosenkę</h2>
 
         <div class="mb-2 flex-shrink-0">
             <input type="text" id="userNameInput" placeholder="Napisz imię / Stolik"
@@ -60,8 +60,8 @@
             <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Wpisz tytuł lub wykonawcę (np. Sanah)..."
                    class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
 
-            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
-                <option value="">Wszystkie bazy</option>
+            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-2 py-2 text-xs md:text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
+                <option value="">Wszystkie</option>
                 <option value="iSing">iSing</option>
                 <option value="Karafan">Karafan</option>
             </select>
@@ -81,15 +81,15 @@
         </div>
 
         <!-- SPISOK PESEN S POLZUNKOM -->
-        <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2 min-h-0">
-            <div class="text-center text-zinc-500 py-16 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>
+        <div id="songsList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 min-h-0">
+            <div class="text-center text-zinc-500 py-12 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>
         </div>
     </section>
 
     <!-- SEKCJA KOLEJKI -->
-    <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300">
-        <h2 class="text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Aktualna Kolejka</h2>
-        <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2 min-h-0">
+    <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[400px] lg:h-[600px] transition-all duration-300">
+        <h2 class="text-lg md:text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Aktualna Kolejka</h2>
+        <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 min-h-0">
             <!-- Generowane w JS -->
         </div>
     </section>
@@ -98,20 +98,20 @@
 
 <!-- DOLNY PASEK Z DUŻYM KODEM QR -->
 <footer class="max-w-7xl mx-auto w-full flex-shrink-0">
-    <div class="bg-zinc-950/90 border border-pink-500/40 rounded-2xl p-3 md:p-4 box-glow flex flex-row items-center justify-between gap-4">
+    <div class="bg-zinc-950/90 border border-pink-500/40 rounded-2xl p-3 md:p-4 box-glow flex flex-row items-center justify-between gap-3">
         <div>
-            <h3 class="text-lg md:text-2xl font-black text-pink-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 class="text-base md:text-xl font-black text-pink-400 uppercase tracking-wider flex items-center gap-2">
                 <span>📸</span> Prowadzący karaoke
             </h3>
-            <p class="text-xs md:text-sm text-zinc-300 mt-1 max-w-lg">
+            <p class="text-[11px] md:text-sm text-zinc-300 mt-1 max-w-md">
                 Zeskanuj kod QR aparatem w telefonie, aby przejść do Instagrama!
             </p>
         </div>
 
         <a href="https://www.instagram.com/denis_wozniak_official/?utm_source=ig_web_button_share_sheet"
            target="_blank" rel="noopener noreferrer"
-           class="block p-2 bg-white rounded-xl border-2 border-pink-500 hover:scale-105 transition transform duration-200 shadow-xl flex-shrink-0">
-            <img src="/images/denis_wozniak_official_qr.png" alt="Instagram QR Code" class="w-32 h-32 md:w-40 md:h-40 object-contain rounded-lg" />
+           class="block p-1.5 bg-white rounded-xl border-2 border-pink-500 hover:scale-105 transition transform duration-200 shadow-xl flex-shrink-0">
+            <img src="/images/denis_wozniak_official_qr.png" alt="Instagram QR Code" class="w-28 h-28 md:w-36 md:h-36 object-contain rounded-lg" />
         </a>
     </div>
 </footer>
@@ -138,22 +138,22 @@
         currentMode = mode;
 
         document.getElementById('btnGuest').className = mode === 'guest'
-            ? "bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg transition text-sm"
-            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
+            ? "bg-pink-600 text-white font-bold px-5 py-1.5 rounded-full shadow-lg transition text-sm"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-5 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
 
         document.getElementById('btnAdmin').className = mode === 'admin'
-            ? "bg-pink-600 text-white font-bold px-6 py-1.5 rounded-full shadow-lg transition text-sm"
-            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-6 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
+            ? "bg-pink-600 text-white font-bold px-5 py-1.5 rounded-full shadow-lg transition text-sm"
+            : "bg-zinc-900 border border-pink-900 text-pink-300 font-bold px-5 py-1.5 rounded-full hover:bg-pink-950 transition text-sm";
 
         const leftSection = document.getElementById('leftSection');
         const queueSection = document.getElementById('queueSection');
 
         if (mode === 'admin') {
             leftSection.style.display = 'none';
-            queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300";
+            queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[600px] transition-all duration-300";
         } else {
             leftSection.style.display = 'flex';
-            queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-full min-h-0 transition-all duration-300";
+            queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[400px] lg:h-[600px] transition-all duration-300";
         }
 
         fetchQueue();
@@ -179,9 +179,8 @@
 
         const list = document.getElementById('songsList');
 
-        // Если ничего не введено и не выбран язык — не грузим всю базу на телефон
         if (!query && !source && !currentLang) {
-            list.innerHTML = `<div class="text-center text-zinc-500 py-16 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>`;
+            list.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">Wpisz nazwę piosenki lub wykonawcy w wyszukiwarce powyżej...</div>`;
             return;
         }
 
@@ -197,7 +196,6 @@
                     return;
                 }
 
-                // Ограничим вывод максимум 100 результатами, чтобы телефон не зависал
                 const limitedSongs = songs.slice(0, 100);
 
                 limitedSongs.forEach(song => {
@@ -206,12 +204,12 @@
                     card.innerHTML = `
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold text-pink-100 text-base">${song.title}</h3>
+                                <h3 class="font-bold text-pink-100 text-sm md:text-base">${song.title}</h3>
                                 <span class="text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded">${song.language || 'PL'}</span>
                             </div>
                             <p class="text-xs text-zinc-400 mt-0.5">${song.artist} • <span class="text-pink-500">${song.source}</span></p>
                         </div>
-                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-1.5 rounded-lg transition text-xs">Zamów</button>
+                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs flex-shrink-0">Zamów</button>
                     `;
                     list.appendChild(card);
                 });
@@ -245,7 +243,7 @@
                 list.innerHTML = '';
 
                 if (!queue || queue.length === 0) {
-                    list.innerHTML = `<div class="text-center text-zinc-500 py-10">Kolejka jest pusta.</div>`;
+                    list.innerHTML = `<div class="text-center text-zinc-500 py-10 text-sm">Kolejka jest pusta.</div>`;
                     return;
                 }
 
@@ -266,7 +264,7 @@
 
                     card.innerHTML = `
                         <div>
-                            <h4 class="font-bold text-pink-200 text-base">${item.song.title}</h4>
+                            <h4 class="font-bold text-pink-200 text-sm md:text-base">${item.song.title}</h4>
                             <p class="text-xs text-zinc-300 mt-0.5">Wykonawca: <span class="text-pink-400 font-semibold">${item.song.artist}</span></p>
                             <p class="text-[11px] text-zinc-400 mt-1">Zamówił: <span class="text-pink-300 font-semibold">${item.userName}</span> | Status: <span class="text-yellow-400 font-bold">${item.status}</span></p>
                         </div>
