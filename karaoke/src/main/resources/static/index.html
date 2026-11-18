@@ -29,6 +29,32 @@
             background: #ff2a85;
             border-radius: 4px;
         }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #ff2a85;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen p-3 md:p-5 flex flex-col justify-between box-border">
@@ -53,14 +79,14 @@
 
         <div class="mb-2 flex-shrink-0">
             <input type="text" id="userNameInput" placeholder="Napisz imię / Stolik"
-                   class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+                   class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" maxlength="50" />
         </div>
 
         <div class="flex gap-2 mb-2 flex-shrink-0">
-            <input type="text" id="searchInput" oninput="fetchSongs()" placeholder="Wpisz tytuł lub wykonawcę (np. Sanah)..."
-                   class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" />
+            <input type="text" id="searchInput" oninput="debouncedFetchSongs()" placeholder="Wpisz tytuł lub wykonawcę (np. Sanah)..."
+                   class="flex-1 bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition" maxlength="100" />
 
-            <select id="sourceSelect" onchange="fetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-2 py-2 text-xs md:text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
+            <select id="sourceSelect" onchange="debouncedFetchSongs()" class="bg-black/70 border border-zinc-800 rounded-xl px-2 py-2 text-xs md:text-sm text-pink-300 focus:outline-none focus:border-pink-500 transition">
                 <option value="">Wszystkie</option>
                 <option value="iSing">iSing</option>
                 <option value="Karafan">Karafan</option>
@@ -88,7 +114,10 @@
 
     <!-- SEKCJA KOLEJKI -->
     <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[400px] lg:h-[600px] transition-all duration-300">
-        <h2 class="text-lg md:text-xl font-bold text-pink-400 mb-2 flex-shrink-0">Aktualna Kolejka</h2>
+        <h2 class="text-lg md:text-xl font-bold text-pink-400 mb-2 flex-shrink-0 flex items-center justify-between">
+            Aktualna Kolejka
+            <span id="queueCount" class="text-xs bg-pink-600 text-white px-2 py-0.5 rounded">0</span>
+        </h2>
         <div id="queueList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 min-h-0">
             <!-- Generowane w JS -->
         </div>
@@ -117,22 +146,88 @@
 </footer>
 
 <script>
-    const ADMIN_PASSWORD = "DenisGlam";
+    // Stan aplikacji
     let currentLang = '';
     let currentMode = 'guest';
+    let adminAuthenticated = false;
+    let searchDebounceTimer = null;
+    const SEARCH_DEBOUNCE_MS = 300;
 
+    // Funkcje pomocnicze
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(message, type = 'info') {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function setLoading(elementId, loading) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (loading) {
+            el.dataset.originalHtml = el.innerHTML;
+            el.innerHTML = '<span class="loading-spinner"></span>Ładowanie...';
+            el.disabled = true;
+        } else {
+            el.innerHTML = el.dataset.originalHtml || '';
+            el.disabled = false;
+        }
+    }
+
+    // Debounced search
+    function debouncedFetchSongs() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(fetchSongs, SEARCH_DEBOUNCE_MS);
+    }
+
+    // Inicjalizacja
     document.addEventListener('DOMContentLoaded', () => {
         fetchQueue();
         setInterval(fetchQueue, 3000);
     });
 
-    function switchTab(mode) {
+    // Przełączanie trybów
+    async function switchTab(mode) {
         if (mode === 'admin' && currentMode !== 'admin') {
-            const inputPassword = prompt("Wprowadź hasło Administratora:");
-            if (inputPassword !== ADMIN_PASSWORD) {
-                alert("Nieprawidłowe hasło!");
+            const password = prompt("Wprowadź hasło Administratora:");
+            if (!password) return;
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showToast(data.message || 'Nieprawidłowe hasło!', 'error');
+                    return;
+                }
+                adminAuthenticated = true;
+                showToast('Zalogowano jako administrator', 'success');
+            } catch (e) {
+                showToast('Błąd logowania', 'error');
                 return;
             }
+        } else if (mode === 'guest') {
+            adminAuthenticated = false;
         }
 
         currentMode = mode;
@@ -159,6 +254,7 @@
         fetchQueue();
     }
 
+    // Filtr języka
     function filterByLang(lang) {
         currentLang = lang;
         document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -168,15 +264,15 @@
                 btn.className = "lang-btn bg-zinc-900 border border-zinc-800 text-pink-300 hover:bg-pink-950 font-bold text-xs px-2.5 py-1 rounded-lg transition";
             }
         });
-        fetchSongs();
+        debouncedFetchSongs();
     }
 
-    function fetchSongs() {
+    // Pobieranie piosenek
+    async function fetchSongs() {
         if (currentMode === 'admin') return;
 
         const query = document.getElementById('searchInput').value.trim();
         const source = document.getElementById('sourceSelect').value;
-
         const list = document.getElementById('songsList');
 
         if (!query && !source && !currentLang) {
@@ -184,109 +280,221 @@
             return;
         }
 
-        const url = `/api/songs?query=${encodeURIComponent(query)}&source=${encodeURIComponent(source)}&language=${encodeURIComponent(currentLang)}`;
+        list.innerHTML = '<div class="text-center text-zinc-500 py-12 text-sm"><span class="loading-spinner"></span>Szukam...</div>';
 
-        fetch(url)
-            .then(res => res.json())
-            .then(songs => {
-                list.innerHTML = '';
+        try {
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (source) params.append('source', source);
+            if (currentLang) params.append('language', currentLang);
 
-                if (!songs || songs.length === 0) {
-                    list.innerHTML = `<div class="text-center text-zinc-500 py-10">Brak utworu w bazie...</div>`;
-                    return;
+            const res = await fetch(`/api/songs?${params.toString()}`);
+            if (!res.ok) {
+                if (res.status === 429) {
+                    showToast('Zbyt wiele zapytań. Poczekaj chwilę.', 'error');
                 }
+                throw new Error(`HTTP ${res.status}`);
+            }
 
-                const limitedSongs = songs.slice(0, 100);
+            const songs = await res.json();
+            list.innerHTML = '';
 
-                limitedSongs.forEach(song => {
-                    const card = document.createElement('div');
-                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between hover:border-pink-600/50 transition";
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="font-bold text-pink-100 text-sm md:text-base">${song.title}</h3>
-                                <span class="text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded">${song.language || 'PL'}</span>
-                            </div>
-                            <p class="text-xs text-zinc-400 mt-0.5">${song.artist} • <span class="text-pink-500">${song.source}</span></p>
-                        </div>
-                        <button onclick="orderSong(${song.id})" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs flex-shrink-0">Zamów</button>
-                    `;
-                    list.appendChild(card);
-                });
-            })
-            .catch(err => console.error("Błąd pobierania piosenek:", err));
+            if (!songs || songs.length === 0) {
+                list.innerHTML = `<div class="text-center text-zinc-500 py-10">Brak utworu w bazie...</div>`;
+                return;
+            }
+
+            // Limit wyników dla wydajności UI
+            const limitedSongs = songs.slice(0, 100);
+
+            limitedSongs.forEach(song => {
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between hover:border-pink-600/50 transition";
+                // Używamy textContent dla bezpieczeństwa (XSS prevention)
+                const titleEl = document.createElement('h3');
+                titleEl.className = "font-bold text-pink-100 text-sm md:text-base";
+                titleEl.textContent = song.title;
+
+                const langEl = document.createElement('span');
+                langEl.className = "text-[10px] bg-zinc-800 text-pink-400 font-bold px-2 py-0.5 rounded";
+                langEl.textContent = song.language || 'PL';
+
+                const artistEl = document.createElement('p');
+                artistEl.className = "text-xs text-zinc-400 mt-0.5";
+                artistEl.innerHTML = `${escapeHtml(song.artist)} • <span class="text-pink-500">${escapeHtml(song.source)}</span>`;
+
+                const btn = document.createElement('button');
+                btn.className = "bg-pink-600 hover:bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs flex-shrink-0";
+                btn.textContent = "Zamów";
+                btn.onclick = () => orderSong(song.id);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.appendChild(titleEl);
+                infoDiv.appendChild(langEl);
+                infoDiv.appendChild(artistEl);
+
+                card.appendChild(infoDiv);
+                card.appendChild(btn);
+                list.appendChild(card);
+            });
+        } catch (err) {
+            console.error("Błąd pobierania piosenek:", err);
+            list.innerHTML = `<div class="text-center text-red-500 py-10">Błąd ładowania. Spróbuj ponownie.</div>`;
+        }
     }
 
-    function orderSong(songId) {
-        const userName = document.getElementById('userNameInput').value.trim();
+    // Zamawianie piosenki
+    async function orderSong(songId) {
+        const userNameInput = document.getElementById('userNameInput');
+        const userName = userNameInput.value.trim();
+
         if (!userName) {
-            alert("Proszę wpisać swoje imię lub numer stolika w górnym polu!");
+            showToast("Proszę wpisać swoje imię lub numer stolika!", 'error');
+            userNameInput.focus();
             return;
         }
 
-        fetch(`/api/queue?songId=${songId}&userName=${encodeURIComponent(userName)}`, { method: 'POST' })
-            .then(res => {
-                if (res.ok) {
-                    fetchQueue();
-                    alert("Pomyślnie dodano piosenkę do kolejki!");
-                } else {
-                    alert("Błąd podczas dodawania piosenki.");
-                }
+        try {
+            const res = await fetch('/api/queue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ songId, userName })
             });
+
+            if (res.ok) {
+                showToast("Pomyślnie dodano piosenkę do kolejki!", 'success');
+                fetchQueue();
+            } else if (res.status === 429) {
+                showToast("Zbyt wiele zapytań. Poczekaj chwilę.", 'error');
+            } else {
+                showToast("Błąd podczas dodawania piosenki.", 'error');
+            }
+        } catch (err) {
+            console.error("Błąd zamawiania:", err);
+            showToast("Błąd sieci. Spróbuj ponownie.", 'error');
+        }
     }
 
-    function fetchQueue() {
-        fetch('/api/queue')
-            .then(res => res.json())
-            .then(queue => {
-                const list = document.getElementById('queueList');
-                list.innerHTML = '';
+    // Pobieranie kolejki
+    async function fetchQueue() {
+        try {
+            const res = await fetch('/api/queue');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const queue = await res.json();
 
-                if (!queue || queue.length === 0) {
-                    list.innerHTML = `<div class="text-center text-zinc-500 py-10 text-sm">Kolejka jest pusta.</div>`;
-                    return;
+            const list = document.getElementById('queueList');
+            const countEl = document.getElementById('queueCount');
+            list.innerHTML = '';
+
+            const activeQueue = queue || [];
+            if (countEl) countEl.textContent = activeQueue.length;
+
+            if (activeQueue.length === 0) {
+                list.innerHTML = `<div class="text-center text-zinc-500 py-10 text-sm">Kolejka jest pusta.</div>`;
+                return;
+            }
+
+            activeQueue.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between";
+
+                let adminControls = '';
+                if (currentMode === 'admin' && adminAuthenticated) {
+                    const playBtn = document.createElement('button');
+                    playBtn.className = "bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition";
+                    playBtn.textContent = "Graj";
+                    playBtn.onclick = () => playSong(item.id, item.song?.url);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = "bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition";
+                    delBtn.textContent = "Usuń";
+                    delBtn.onclick = () => removeFromQueue(item.id);
+
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = "flex gap-2";
+                    controlsDiv.appendChild(playBtn);
+                    controlsDiv.appendChild(delBtn);
+                    adminControls = controlsDiv.outerHTML;
                 }
 
-                queue.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between";
+                const titleEl = document.createElement('h4');
+                titleEl.className = "font-bold text-pink-200 text-sm md:text-base";
+                titleEl.textContent = item.song?.title || 'Nieznany tytuł';
 
-                    let adminControls = '';
-                    if (currentMode === 'admin') {
-                        const escapedUrl = item.song.url ? item.song.url.replace(/'/g, "\\'") : '';
-                        adminControls = `
-                            <div class="flex gap-2">
-                                <button onclick="playSong(${item.id}, '${escapedUrl}')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">Graj</button>
-                                <button onclick="removeFromQueue(${item.id})" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition">Usuń</button>
-                            </div>
-                        `;
-                    }
+                const artistEl = document.createElement('p');
+                artistEl.className = "text-xs text-zinc-300 mt-0.5";
+                artistEl.innerHTML = `Wykonawca: <span class="text-pink-400 font-semibold">${escapeHtml(item.song?.artist || '')}</span>`;
 
-                    card.innerHTML = `
-                        <div>
-                            <h4 class="font-bold text-pink-200 text-sm md:text-base">${item.song.title}</h4>
-                            <p class="text-xs text-zinc-300 mt-0.5">Wykonawca: <span class="text-pink-400 font-semibold">${item.song.artist}</span></p>
-                            <p class="text-[11px] text-zinc-400 mt-1">Zamówił: <span class="text-pink-300 font-semibold">${item.userName}</span> | Status: <span class="text-yellow-400 font-bold">${item.status}</span></p>
-                        </div>
-                        ${adminControls}
-                    `;
-                    list.appendChild(card);
-                });
-            })
-            .catch(err => console.error("Błąd pobierania kolejki:", err));
+                const metaEl = document.createElement('p');
+                metaEl.className = "text-[11px] text-zinc-400 mt-1";
+                metaEl.innerHTML = `Zamówił: <span class="text-pink-300 font-semibold">${escapeHtml(item.userName)}</span> | Status: <span class="text-yellow-400 font-bold">${escapeHtml(item.status)}</span>`;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.appendChild(titleEl);
+                infoDiv.appendChild(artistEl);
+                infoDiv.appendChild(metaEl);
+
+                card.appendChild(infoDiv);
+
+                if (adminControls) {
+                    const controlsContainer = document.createElement('div');
+                    controlsContainer.innerHTML = adminControls;
+                    card.appendChild(controlsContainer);
+                }
+
+                list.appendChild(card);
+            });
+        } catch (err) {
+            console.error("Błąd pobierania kolejki:", err);
+        }
     }
 
+    // Odtwarzanie piosenki (admin)
     function playSong(id, songUrl) {
-        const targetUrl = (songUrl && songUrl.startsWith('http')) ? songUrl : 'https://www.google.com';
+        const targetUrl = (songUrl && songUrl.startsWith('http') && isSafeUrl(songUrl))
+            ? songUrl
+            : 'https://www.google.com';
 
-        window.open(targetUrl, 'karaokePlayerWindow');
+        window.open(targetUrl, 'karaokePlayerWindow', 'noopener,noreferrer');
 
-        fetch(`/api/queue/${id}/status?status=PLAYING`, { method: 'PUT' })
-            .then(() => fetchQueue());
+        fetch(`/api/queue/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ status: 'PLAYING' })
+        }).then(() => fetchQueue());
     }
 
-    function removeFromQueue(id) {
-        fetch(`/api/queue/${id}`, { method: 'DELETE' }).then(() => fetchQueue());
+    // Walidacja URL (zapobieganie open redirect)
+    function isSafeUrl(url) {
+        try {
+            const parsed = new URL(url);
+            // Pozwól tylko http/https
+            if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+            // Opcjonalnie: whitelist domen
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // Usuwanie z kolejki (admin)
+    async function removeFromQueue(id) {
+        if (!confirm('Usunąć piosenkę z kolejki?')) return;
+
+        try {
+            const res = await fetch(`/api/queue/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('Usunięto z kolejki', 'success');
+                fetchQueue();
+            } else if (res.status === 429) {
+                showToast('Zbyt wiele zapytań', 'error');
+            } else {
+                showToast('Błąd usuwania', 'error');
+            }
+        } catch (err) {
+            console.error("Błąd usuwania:", err);
+            showToast('Błąd sieci', 'error');
+        }
     }
 </script>
 </body>

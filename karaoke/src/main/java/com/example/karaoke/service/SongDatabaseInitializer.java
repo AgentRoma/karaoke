@@ -6,11 +6,16 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Inicjalizator bazy piosenek z plików CSV.
+ * Generuje bezpieczne URL-e z poprawnym kodowaniem.
+ */
 @Service
 public class SongDatabaseInitializer {
 
@@ -63,12 +68,15 @@ public class SongDatabaseInitializer {
 
                         String langCode = mapLanguageToCode(rawLang);
 
-                        // Generowanie linku dopasowanego do źródła
+                        // Generowanie bezpiecznego linku z kodowaniem URL
+                        String query = artist + " " + title;
+                        String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
+
                         String songUrl;
                         if (defaultSource.equalsIgnoreCase("iSing")) {
-                            songUrl = "https://www.google.com/search?q=ising+" + (artist + "+" + title).replace(" ", "+");
+                            songUrl = "https://www.google.com/search?q=ising+" + encodedQuery;
                         } else {
-                            songUrl = "https://www.google.com/search?q=karafun+" + (artist + "+" + title).replace(" ", "+");
+                            songUrl = "https://www.google.com/search?q=karafun+" + encodedQuery;
                         }
 
                         catalog.add(new Song(

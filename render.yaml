@@ -4,3 +4,11 @@ services:
     env: docker
     region: frankfurt
     plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false  # Ustaw w panelu Render jako secret!
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    healthCheckPath: /actuator/health
+    autoDeploy: true
