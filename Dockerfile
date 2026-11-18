@@ -4,7 +4,7 @@ WORKDIR /app
 COPY karaoke/pom.xml karaoke/mvnw karaoke/mvnw.cmd ./
 COPY karaoke/.mvn .mvn
 COPY karaoke/src ./src
-RUN ./mvnw -q -DskipTests package
+RUN chmod +x ./mvnw && ./mvnw -q -DskipTests package
 
 # Runtime stage - minimal image
 FROM eclipse-temurin:21-jre-alpine
