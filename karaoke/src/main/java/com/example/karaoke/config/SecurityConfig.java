@@ -63,8 +63,7 @@ public class SecurityConfig {
                         .permissionsPolicy(policy -> policy.policy(
                                 "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
                         ))
-                                                .crossOriginResourcePolicy(corp -> corp.sameOrigin())
-                )
+                                                )
 
                 // Authorization - wszystkie endpointy publiczne (dla uproszczenia), ale można dodać auth
                 .authorizeHttpRequests(auth -> auth
