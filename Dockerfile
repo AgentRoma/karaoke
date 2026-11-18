@@ -16,7 +16,7 @@ USER appuser
 WORKDIR /app
 
 # Copy only the jar
-COPY --from=builder /app/karaoke/target/karaoke-*.jar app.jar
+COPY --from=builder /app/target/karaoke-*.jar app.jar
 
 # Security: read-only filesystem (except /tmp)
 # Note: Spring Boot needs write access for temp files, so we don't use read-only root
