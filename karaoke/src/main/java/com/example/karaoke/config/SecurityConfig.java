@@ -63,7 +63,7 @@ public class SecurityConfig {
                         .permissionsPolicy(policy -> policy.policy(
                                 "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
                         ))
-                        .crossOriginOpenerPolicy(cop -> cop.sameOrigin())
+                        .crossOriginEmbedderPolicy(coep -> coep.requireCorp())
                         .crossOriginResourcePolicy(corp -> corp.sameOrigin())
                 )
 

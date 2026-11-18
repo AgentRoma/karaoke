@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * W produkcji zalecane: Redis + Bucket4j / Resilience4j.
  */
 @Component
-public class RateLimitFilter extends OncePerRequestFilter {
+class RateLimitFilter extends OncePerRequestFilter {
 
     // Konfiguracja limitów
     private static final int SEARCH_REQUESTS_PER_MINUTE = 30;
