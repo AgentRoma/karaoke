@@ -1,0 +1,28 @@
+# Maven / build artifacts
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Secrets (should never be in repo)
+.env
+*.env.local
+*.pem
+*.key
+*.crt
