@@ -9,6 +9,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -65,6 +67,42 @@ public class KaraokeService {
         buildSearchIndexes();
 
         System.out.println(">>> ŁĄCZNIE W BAZIE KLUBU: " + allSongsMap.size() + " PIOSENEK <<<");
+    }
+
+    public synchronized Song addSong(String artist, String title, String language, String source) {
+        String cleanArtist = (artist == null) ? "" : artist.trim().replaceAll("[<>\"'&]", "");
+        String cleanTitle = (title == null) ? "" : title.trim().replaceAll("[<>\"'&]", "");
+
+        if (cleanArtist.isEmpty() || cleanTitle.isEmpty()) {
+            throw new IllegalArgumentException("Podaj wykonawcę (autora) oraz tytuł piosenki.");
+        }
+
+        String rawLang = (language == null || language.isBlank()) ? "PL" : language.trim().toUpperCase(Locale.ROOT);
+        String cleanLang = rawLang.replaceAll("[^A-Z0-9_-]", "");
+        if (cleanLang.isEmpty()) {
+            cleanLang = "PL";
+        }
+        if (cleanLang.length() > 5) {
+            cleanLang = cleanLang.substring(0, 5);
+        }
+
+        String cleanSource = (source == null || source.isBlank()) ? "Admin" : source.trim().replaceAll("[<>\"'&]", "");
+        String searchQuery = cleanArtist + " " + cleanTitle;
+        String encodedQuery = URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
+        String songUrl = "https://www.google.com/search?q=" + encodedQuery;
+
+        Song newSong = new Song(
+                songIdGenerator.getAndIncrement(),
+                cleanTitle,
+                cleanArtist,
+                cleanSource,
+                songUrl,
+                cleanLang
+        );
+
+        allSongsMap.put(newSong.getId(), newSong);
+        buildSearchIndexes();
+        return newSong;
     }
 
     /**

@@ -127,8 +127,25 @@
         </div>
     </section>
 
-    <!-- SEKCJA KOLEJKI -->
+    <!-- SEKCJA KOLEJKI I PANEL ADMINA -->
     <section id="queueSection" class="lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[400px] lg:h-[600px] transition-all duration-300">
+        <!-- FORMULARZ DODAWANIA PIOSENKI (TYLKO DLA ZALOGOWANEGO ADMINA) -->
+        <div id="adminAddSongPanel" class="bg-zinc-900/90 border border-pink-500/40 rounded-xl p-3 mb-3 flex-shrink-0" style="display:none;">
+            <h3 class="text-sm font-bold text-pink-300 mb-2">Dodaj piosenkę do bazy (widoczna dla wszystkich)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input type="text" id="newSongArtist" placeholder="Autor / Wykonawca"
+                       class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="100" />
+                <input type="text" id="newSongTitle" placeholder="Tytuł piosenki"
+                       class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="120" />
+                <input type="text" id="newSongLang" placeholder="Język (np. PL, EN, RU, UA)"
+                       class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="10" />
+            </div>
+            <button type="button" onclick="addSongToDatabase()"
+                    class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-1.5 rounded-lg transition text-xs">
+                Dodaj piosenkę
+            </button>
+        </div>
+
         <h2 class="text-lg md:text-xl font-bold text-pink-400 mb-2 flex-shrink-0 flex items-center justify-between">
             Aktualna Kolejka
             <span id="queueCount" class="text-xs bg-pink-600 text-white px-2 py-0.5 rounded">0</span>
@@ -257,16 +274,70 @@
 
         const leftSection = document.getElementById('leftSection');
         const queueSection = document.getElementById('queueSection');
+        const adminAddSongPanel = document.getElementById('adminAddSongPanel');
 
-        if (mode === 'admin') {
+        if (mode === 'admin' && adminAuthenticated) {
             leftSection.style.display = 'none';
             queueSection.className = "lg:col-span-12 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[600px] transition-all duration-300";
+            if (adminAddSongPanel) adminAddSongPanel.style.display = 'block';
         } else {
             leftSection.style.display = 'flex';
             queueSection.className = "lg:col-span-5 bg-zinc-950/80 p-4 rounded-2xl box-glow flex flex-col h-[400px] lg:h-[600px] transition-all duration-300";
+            if (adminAddSongPanel) adminAddSongPanel.style.display = 'none';
         }
 
         fetchQueue();
+    }
+
+    // Dodawanie piosenki do bazy (tylko administrator)
+    async function addSongToDatabase() {
+        if (currentMode !== 'admin' || !adminAuthenticated) {
+            showToast('Tylko zalogowany administrator może dodawać piosenki.', 'error');
+            return;
+        }
+
+        const artistInput = document.getElementById('newSongArtist');
+        const titleInput = document.getElementById('newSongTitle');
+        const langInput = document.getElementById('newSongLang');
+
+        const artist = artistInput.value.trim();
+        const title = titleInput.value.trim();
+        const language = (langInput.value.trim() || 'PL').toUpperCase();
+
+        if (!artist || !title) {
+            showToast('Podaj autora/wykonawcę oraz tytuł piosenki.', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/admin/songs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Auth': 'true'
+                },
+                body: JSON.stringify({
+                    artist,
+                    title,
+                    language,
+                    source: 'Admin'
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(data.message || `Błąd (${res.status})`, 'error');
+                return;
+            }
+
+            artistInput.value = '';
+            titleInput.value = '';
+            langInput.value = '';
+            showToast(`Dodano do bazy: ${data.artist} – ${data.title} [${data.language}]`, 'success');
+        } catch (err) {
+            console.error('Błąd dodawania piosenki:', err);
+            showToast('Błąd sieci podczas dodawania piosenki.', 'error');
+        }
     }
 
     // Filtr języka
