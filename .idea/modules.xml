@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/karaoke.iml" filepath="$PROJECT_DIR$/.idea/karaoke.iml" />
+      <module fileurl="file://$PROJECT_DIR$/karaoke/karaoke.iml" filepath="$PROJECT_DIR$/karaoke/karaoke.iml" />
     </modules>
   </component>
 </project>
