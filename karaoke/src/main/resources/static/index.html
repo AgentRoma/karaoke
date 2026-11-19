@@ -132,15 +132,22 @@
         <!-- FORMULARZ DODAWANIA PIOSENKI (TYLKO DLA ZALOGOWANEGO ADMINA) -->
         <div id="adminAddSongPanel" class="bg-zinc-900/90 border border-pink-500/40 rounded-xl p-3 mb-3 flex-shrink-0" style="display:none;">
             <h3 class="text-sm font-bold text-pink-300 mb-2">Dodaj piosenkę do bazy (widoczna dla wszystkich)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
                 <input type="text" id="newSongArtist" placeholder="Autor / Wykonawca"
                        class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="100" />
                 <input type="text" id="newSongTitle" placeholder="Tytuł piosenki"
                        class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="120" />
-                <input type="text" id="newSongLang" placeholder="Język (np. PL, EN, RU, UA)"
+                <input type="text" id="newSongLang" placeholder="Język (PL, EN, RU, UA)"
                        class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500" maxlength="10" />
+                <select id="newSongSource"
+                        class="bg-black/70 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-pink-300 focus:outline-none focus:border-pink-500">
+                    <option value="iSing">iSing</option>
+                    <option value="Karafan">Karafan</option>
+                    <option value="YouTube">YouTube</option>
+                    <option value="Inna">Inna</option>
+                </select>
             </div>
-            <button type="button" onclick="addSongToDatabase()"
+            <button type="button" id="addSongBtn" onclick="addSongToDatabase()"
                     class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-1.5 rounded-lg transition text-xs">
                 Dodaj piosenkę
             </button>
@@ -299,15 +306,20 @@
         const artistInput = document.getElementById('newSongArtist');
         const titleInput = document.getElementById('newSongTitle');
         const langInput = document.getElementById('newSongLang');
+        const sourceSelect = document.getElementById('newSongSource');
+        const submitBtn = document.getElementById('addSongBtn');
 
         const artist = artistInput.value.trim();
         const title = titleInput.value.trim();
         const language = (langInput.value.trim() || 'PL').toUpperCase();
+        const source = sourceSelect ? sourceSelect.value : 'iSing';
 
         if (!artist || !title) {
-            showToast('Podaj autora/wykonawcę oraz tytuł piosenki.', 'error');
+            showToast('Wpisz autora/wykonawcę oraz tytuł piosenki.', 'error');
             return;
         }
+
+        if (submitBtn) submitBtn.disabled = true;
 
         try {
             const res = await fetch('/api/admin/songs', {
@@ -320,7 +332,7 @@
                     artist,
                     title,
                     language,
-                    source: 'Admin'
+                    source
                 })
             });
 
@@ -333,10 +345,12 @@
             artistInput.value = '';
             titleInput.value = '';
             langInput.value = '';
-            showToast(`Dodano do bazy: ${data.artist} – ${data.title} [${data.language}]`, 'success');
+            showToast(`Dodano: ${data.artist} – ${data.title} [${data.language}] (${data.source})`, 'success');
         } catch (err) {
             console.error('Błąd dodawania piosenki:', err);
             showToast('Błąd sieci podczas dodawania piosenki.', 'error');
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     }
 

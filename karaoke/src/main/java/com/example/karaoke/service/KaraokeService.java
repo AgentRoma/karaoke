@@ -86,8 +86,10 @@ public class KaraokeService {
             cleanLang = cleanLang.substring(0, 5);
         }
 
-        String cleanSource = (source == null || source.isBlank()) ? "Admin" : source.trim().replaceAll("[<>\"'&]", "");
-        String searchQuery = cleanArtist + " " + cleanTitle;
+        String rawSource = (source == null || source.isBlank()) ? "iSing" : source.trim().replaceAll("[<>\"'&]", "");
+        String cleanSource = rawSource.length() > 30 ? rawSource.substring(0, 30) : rawSource;
+
+        String searchQuery = cleanSource + " " + cleanArtist + " " + cleanTitle;
         String encodedQuery = URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
         String songUrl = "https://www.google.com/search?q=" + encodedQuery;
 
