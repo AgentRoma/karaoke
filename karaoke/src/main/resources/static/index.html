@@ -319,13 +319,12 @@
                 return;
             }
 
-            // Limit wyników dla wydajności UI
             const limitedSongs = songs.slice(0, 100);
 
             limitedSongs.forEach(song => {
                 const card = document.createElement('div');
                 card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between hover:border-pink-600/50 transition";
-                // Używamy textContent dla bezpieczeństwa (XSS prevention)
+
                 const titleEl = document.createElement('h3');
                 titleEl.className = "font-bold text-pink-100 text-sm md:text-base";
                 titleEl.textContent = song.title;
@@ -339,6 +338,7 @@
                 artistEl.innerHTML = `${escapeHtml(song.artist)} • <span class="text-pink-500">${escapeHtml(song.source)}</span>`;
 
                 const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = "bg-pink-600 hover:bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs flex-shrink-0";
                 btn.textContent = "Zamów";
                 btn.onclick = () => orderSong(song.id);
@@ -382,9 +382,8 @@
             } else if (res.status === 429) {
                 showToast("Zbyt wiele zapytań. Poczekaj chwilę.", 'error');
             } else if (res.status === 400) {
-                // 400 = błąd walidacji (np. limit 2 piosenek na imię)
                 const data = await res.json().catch(() => ({}));
-                showToast(data.message || "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. Poczekaj chwilę, aż kto inny doda swój utwór!", 'error');
+                showToast(data.message || "Możesz zamówić maksymalnie 2 piosenki pod rząd na jedno imię. Poczekaj chwilę, aż ktoś inny doda swój utwór!", 'error');
             } else {
                 showToast("Błąd podczas dodawania piosenki.", 'error');
             }
@@ -418,25 +417,6 @@
                 const card = document.createElement('div');
                 card.className = "bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between";
 
-                let adminControls = '';
-                if (currentMode === 'admin' && adminAuthenticated) {
-                    const playBtn = document.createElement('button');
-                    playBtn.className = "bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition";
-                    playBtn.textContent = "Graj";
-                    playBtn.onclick = () => playSong(item.id, item.song?.url);
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = "bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition";
-                    delBtn.textContent = "Usuń";
-                    delBtn.onclick = () => removeFromQueue(item.id);
-
-                    const controlsDiv = document.createElement('div');
-                    controlsDiv.className = "flex gap-2";
-                    controlsDiv.appendChild(playBtn);
-                    controlsDiv.appendChild(delBtn);
-                    adminControls = controlsDiv.outerHTML;
-                }
-
                 const titleEl = document.createElement('h4');
                 titleEl.className = "font-bold text-pink-200 text-sm md:text-base";
                 titleEl.textContent = item.song?.title || 'Nieznany tytuł';
@@ -456,10 +436,25 @@
 
                 card.appendChild(infoDiv);
 
-                if (adminControls) {
-                    const controlsContainer = document.createElement('div');
-                    controlsContainer.innerHTML = adminControls;
-                    card.appendChild(controlsContainer);
+                if (currentMode === 'admin' && adminAuthenticated) {
+                    const playBtn = document.createElement('button');
+                    playBtn.type = 'button';
+                    playBtn.className = "bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition";
+                    playBtn.textContent = "Graj";
+                    playBtn.onclick = () => playSong(item.id, item.song?.url);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = "bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition";
+                    delBtn.textContent = "Usuń";
+                    delBtn.onclick = () => removeFromQueue(item.id);
+
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = "flex gap-2";
+                    controlsDiv.appendChild(playBtn);
+                    controlsDiv.appendChild(delBtn);
+
+                    card.appendChild(controlsDiv);
                 }
 
                 list.appendChild(card);
@@ -506,9 +501,7 @@
     function isSafeUrl(url) {
         try {
             const parsed = new URL(url);
-            // Pozwól tylko http/https
             if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-            // Opcjonalnie: whitelist domen
             return true;
         } catch {
             return false;

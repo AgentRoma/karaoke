@@ -18,8 +18,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Serwis zarządzający bazą piosenek i kolejką karaoke.
- * Zoptymalizowane wyszukiwanie z indeksem i poprawną obsługą diakrytyk.
+ - Serwis zarządzający bazą piosenek i kolejką karaoke.
+ - Zoptymalizowane wyszukiwanie z indeksem i poprawną obsługą diakrytyk.
  */
 @Service
 public class KaraokeService {
@@ -68,8 +68,8 @@ public class KaraokeService {
     }
 
     /**
-     * Buduje indeksy wyszukiwania dla O(1) lookup.
-     * Normalizuje i transliteruje tytuły i wykonawców.
+     - Buduje indeksy wyszukiwania dla O(1) lookup.
+     - Normalizuje i transliteruje tytuły i wykonawców.
      */
     private void buildSearchIndexes() {
         titleIndex.clear();
@@ -110,8 +110,8 @@ public class KaraokeService {
     }
 
     /**
-     * Główna metoda wyszukiwania - używa indeksów dla szybkości.
-     * Fallback do skanowania pełnego tylko gdy indeks nie znajdzie wyników.
+     - Główna metoda wyszukiwania - używa indeksów dla szybkości.
+     - Fallback do skanowania pełnego tylko gdy indeks nie znajdzie wyników.
      */
     public List<Song> searchSongs(String query, String source, String language) {
         String rawQuery = (query == null) ? "" : query.trim();
@@ -186,8 +186,8 @@ public class KaraokeService {
         String artistNorm = normalizeAndTransliterate(song.getArtist());
 
         return titleNorm.contains(normalizedQuery) ||
-               artistNorm.contains(normalizedQuery) ||
-               (titleNorm + " " + artistNorm).contains(normalizedQuery);
+                artistNorm.contains(normalizedQuery) ||
+                (titleNorm + " " + artistNorm).contains(normalizedQuery);
     }
 
     public List<Song> searchSongs(String query, String source) {
@@ -195,11 +195,11 @@ public class KaraokeService {
     }
 
     /**
-     * Normalizacja z zachowaniem możliwości dopasowania:
-     * - lowercase
-     * - transliteracja cyrylicy
-     * - transliteracja polskich diakrytyk (ą→a, ć→c, itd.)
-     * - usuwa tylko znaki sterujące, zostawia spacje i interpunkcję podstawową
+     - Normalizacja z zachowaniem możliwości dopasowania:
+     - - lowercase
+     - - transliteracja cyrylicy
+     - - transliteracja polskich diakrytyk (ą→a, ć→c, itd.)
+     - - usuwa tylko znaki sterujące, zostawia spacje i interpunkcję podstawową
      */
     private String normalizeAndTransliterate(String input) {
         if (input == null) return "";
@@ -279,8 +279,8 @@ public class KaraokeService {
 
         if (sameNameCount >= 2) {
             throw new IllegalArgumentException(
-                    "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. " +
-                    "Poczekaj chwilę, aż kto inny doda swój utwór!"
+                    "Możesz zamówić maksymalnie 2 piosenki pod rząd na jedno imię. " +
+                            "Poczekaj chwilę, aż kto inny doda swój utwór!"
             );
         }
 
@@ -290,8 +290,8 @@ public class KaraokeService {
     }
 
     /**
-     * Normalizacja imienia do porównania: lowercase, usunięcie nadmiarowych spacji.
-     * Zapobiega podwójnemu zamawianiu pod "Jan" / "  Jan  " / "jan".
+     - Normalizacja imienia do porównania: lowercase, usunięcie nadmiarowych spacji.
+     - Zapobiega podwójnemu zamawianiu pod "Jan" / "  Jan  " / "jan".
      */
     private String normalizeNameForComparison(String name) {
         if (name == null) return "";

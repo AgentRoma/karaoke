@@ -12,17 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Inicjalizator bazy piosenek z plików CSV.
- * Generuje bezpieczne URL-e z poprawnym kodowaniem.
- */
 @Service
 public class SongDatabaseInitializer {
 
     public List<Song> generateInitialCatalog(AtomicLong idGen) {
         List<Song> catalog = new ArrayList<>();
 
-        // Wczytanie plików CSV z katalogami
         loadCSV(catalog, idGen, "/karafun_catalog.csv", "Karafan", true);
         loadCSV(catalog, idGen, "/ising_catalog.csv", "iSing", false);
 
@@ -58,7 +53,6 @@ public class SongDatabaseInitializer {
                             artist = cleanString(cols[2]);
                             rawLang = cleanString(cols[8]);
                         } else {
-                            // iSing format: Wykonawca (cols[0]); Tytul (cols[1]); Zrodlo (cols[2]); Jezyk (cols[3])
                             artist = cleanString(cols[0]);
                             title = cleanString(cols[1]);
                             rawLang = cols.length >= 4 ? cleanString(cols[3]) : "PL";
@@ -68,16 +62,12 @@ public class SongDatabaseInitializer {
 
                         String langCode = mapLanguageToCode(rawLang);
 
-                        // Generowanie bezpiecznego linku z kodowaniem URL
                         String query = artist + " " + title;
                         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
 
-                        String songUrl;
-                        if (defaultSource.equalsIgnoreCase("iSing")) {
-                            songUrl = "https://www.google.com/search?q=ising+" + encodedQuery;
-                        } else {
-                            songUrl = "https://www.google.com/search?q=karafun+" + encodedQuery;
-                        }
+                        String songUrl = defaultSource.equalsIgnoreCase("iSing")
+                                ? "https://www.google.com/search?q=ising+" + encodedQuery
+                                : "https://www.google.com/search?q=karafun+" + encodedQuery;
 
                         catalog.add(new Song(
                                 idGen.getAndIncrement(),
@@ -97,21 +87,23 @@ public class SongDatabaseInitializer {
 
     private String cleanString(String input) {
         if (input == null) return "";
-        return input.replace("\"", "").trim();
+        return input.replace("\"", "")
+                .replace("\u0000", "")
+                .trim();
     }
 
     private String mapLanguageToCode(String rawLang) {
-        if (rawLang == null) return "EN";
+        if (rawLang == null || rawLang.isBlank()) return "EN";
         String upper = rawLang.trim().toUpperCase();
 
-        if (upper.equals("PL") || upper.contains("POLISH")) return "PL";
-        if (upper.equals("EN") || upper.contains("ENGLISH")) return "EN";
-        if (upper.equals("RU") || upper.contains("RUSSIAN")) return "RU";
-        if (upper.equals("UA") || upper.contains("UKRAINIAN")) return "UA";
-        if (upper.equals("FR") || upper.contains("FRENCH")) return "FR";
-        if (upper.equals("ES") || upper.contains("SPANISH")) return "ES";
-        if (upper.equals("IT") || upper.contains("ITALIAN")) return "IT";
-        if (upper.equals("DE") || upper.contains("GERMAN")) return "DE";
+        if (upper.equals("PL") || upper.contains("POLISH") || upper.contains("POLSKI")) return "PL";
+        if (upper.equals("EN") || upper.contains("ENGLISH") || upper.contains("ANGIELSKI")) return "EN";
+        if (upper.equals("RU") || upper.contains("RUSSIAN") || upper.contains("ROSYJSKI")) return "RU";
+        if (upper.equals("UA") || upper.contains("UKRAINIAN") || upper.contains("UKRAIŃSKI")) return "UA";
+        if (upper.equals("FR") || upper.contains("FRENCH") || upper.contains("FRANCUSKI")) return "FR";
+        if (upper.equals("ES") || upper.contains("SPANISH") || upper.contains("HISZPAŃSKI")) return "ES";
+        if (upper.equals("IT") || upper.contains("ITALIAN") || upper.contains("WŁOSKI")) return "IT";
+        if (upper.equals("DE") || upper.contains("GERMAN") || upper.contains("NIEMIECKI")) return "DE";
 
         return upper.length() == 2 ? upper : "EN";
     }
