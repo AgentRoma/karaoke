@@ -20,10 +20,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 class RateLimitFilter extends OncePerRequestFilter {
 
-    // Konfiguracja limitów
-    private static final int SEARCH_REQUESTS_PER_MINUTE = 30;
-    private static final int QUEUE_REQUESTS_PER_MINUTE = 20;
-    private static final int GENERAL_REQUESTS_PER_MINUTE = 60;
+    // Konfiguracja limitów (zwiększone dla wygody - prod: Tuning w env)
+    private static final int DEFAULT_SEARCH_REQUESTS_PER_MINUTE = 300;
+    private static final int DEFAULT_QUEUE_REQUESTS_PER_MINUTE = 300;
+    private static final int DEFAULT_GENERAL_REQUESTS_PER_MINUTE = 300;
+
+    private final int searchRequestsPerMinute;
+    private final int queueRequestsPerMinute;
+    private final int generalRequestsPerMinute;
+
+    public RateLimitFilter(
+            @org.springframework.beans.factory.annotation.Value("${rate.limit.search:300}") int searchLimit,
+            @org.springframework.beans.factory.annotation.Value("${rate.limit.queue:300}") int queueLimit,
+            @org.springframework.beans.factory.annotation.Value("${rate.limit.general:300}") int generalLimit) {
+        this.searchRequestsPerMinute = searchLimit;
+        this.queueRequestsPerMinute = queueLimit;
+        this.generalRequestsPerMinute = generalLimit;
+    }
 
     // Store: IP -> (windowStart, count)
     private final Map<String, RateLimitBucket> buckets = new ConcurrentHashMap<>();
@@ -34,15 +47,25 @@ class RateLimitFilter extends OncePerRequestFilter {
 
         String ip = getClientIp(request);
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        // Określ limit na podstawie ścieżki
+        // Pomijaj rate limiting dla GET (odczyt) oraz dla admina z naglowkiem X-Admin-Auth
+        // Odswiezenie kolejki/szukanie nie moze blokowac Zamow/Graj/Usun
+        boolean isAdminRequest = "true".equals(request.getHeader("X-Admin-Auth"));
+
+        if ("GET".equals(method) || isAdminRequest) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Określ limit na podstawie sciezki (tylko dla POST/PUT/DELETE)
         int limit;
         if (path.startsWith("/api/songs")) {
-            limit = SEARCH_REQUESTS_PER_MINUTE;
+            limit = searchRequestsPerMinute;
         } else if (path.startsWith("/api/queue")) {
-            limit = QUEUE_REQUESTS_PER_MINUTE;
+            limit = queueRequestsPerMinute;
         } else {
-            limit = GENERAL_REQUESTS_PER_MINUTE;
+            limit = generalRequestsPerMinute;
         }
 
         RateLimitBucket bucket = buckets.computeIfAbsent(ip, k -> new RateLimitBucket());
@@ -56,7 +79,7 @@ class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Dodaj nagłówki rate limit
+        // Dodaj naglowki rate limit
         response.setHeader("X-RateLimit-Limit", String.valueOf(limit));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(bucket.getRemaining(limit)));
         response.setHeader("X-RateLimit-Reset", String.valueOf(bucket.getResetTime()));
@@ -65,13 +88,21 @@ class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
+        // Render (i inne proksi) wysyla X-Forwarded-For jako liste: "client, proxy1, proxy2"
+        // Bierzemy pierwszy (prawdziwy klient) - pomijamy "unknown" i puste wartosci
         String xf = request.getHeader("X-Forwarded-For");
         if (xf != null && !xf.isEmpty()) {
-            return xf.split(",")[0].trim();
+            String[] ips = xf.split(",");
+            for (String ip : ips) {
+                String candidate = ip.trim();
+                if (!candidate.isEmpty() && !"unknown".equalsIgnoreCase(candidate)) {
+                    return candidate;
+                }
+            }
         }
         String xr = request.getHeader("X-Real-IP");
-        if (xr != null && !xr.isEmpty()) {
-            return xr;
+        if (xr != null && !xr.isEmpty() && !"unknown".equalsIgnoreCase(xr.trim())) {
+            return xr.trim();
         }
         return request.getRemoteAddr();
     }

@@ -70,6 +70,21 @@
     </div>
 </header>
 
+<!-- MODAŁ LOGOWANIA ADMINA -->
+<div id="adminLoginModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" style="display:none;">
+    <div class="bg-zinc-900 border border-pink-500/50 rounded-2xl p-6 max-w-sm w-full box-glow">
+        <h3 class="text-lg font-bold text-pink-400 mb-4">Logowanie administratora</h3>
+        <input type="password" id="adminPasswordInput"
+               placeholder="Wprowadź hasło..."
+               class="w-full bg-black/70 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-pink-100 placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition mb-4"
+               maxlength="100" autocomplete="current-password" />
+        <div class="flex gap-2">
+            <button id="adminLoginConfirm" class="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-lg transition">Zaloguj</button>
+            <button id="adminLoginCancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2 rounded-lg transition">Anuluj</button>
+        </div>
+    </div>
+</div>
+
 <!-- GŁÓWNA SEKCJA (WYSZUKIWARKA & KOLEJKA) -->
 <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 mb-4">
 
@@ -206,8 +221,8 @@
     // Przełączanie trybów
     async function switchTab(mode) {
         if (mode === 'admin' && currentMode !== 'admin') {
-            const password = prompt("Wprowadź hasło Administratora:");
-            if (!password) return;
+            const password = await showAdminLoginModal();
+            if (password === null) return;
 
             try {
                 const res = await fetch('/api/admin/login', {
@@ -366,6 +381,10 @@
                 fetchQueue();
             } else if (res.status === 429) {
                 showToast("Zbyt wiele zapytań. Poczekaj chwilę.", 'error');
+            } else if (res.status === 400) {
+                // 400 = błąd walidacji (np. limit 2 piosenek na imię)
+                const data = await res.json().catch(() => ({}));
+                showToast(data.message || "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. Poczekaj, aż kto inny doda swój utwór!", 'error');
             } else {
                 showToast("Błąd podczas dodawania piosenki.", 'error');
             }
@@ -378,7 +397,8 @@
     // Pobieranie kolejki
     async function fetchQueue() {
         try {
-            const res = await fetch('/api/queue');
+            const headers = adminAuthenticated ? { 'X-Admin-Auth': 'true' } : {};
+            const res = await fetch('/api/queue', { headers });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const queue = await res.json();
 
@@ -457,11 +477,29 @@
 
         window.open(targetUrl, 'karaokePlayerWindow', 'noopener,noreferrer');
 
-        fetch(`/api/queue/${id}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ status: 'PLAYING' })
-        }).then(() => fetchQueue());
+        const adminHeaders = adminAuthenticated ? { 'X-Admin-Auth': 'true' } : {};
+        try {
+            const res = await fetch(`/api/queue/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    ...adminHeaders
+                },
+                body: new URLSearchParams({ status: 'PLAYING' })
+            });
+            if (res.ok) {
+                showToast('Status: GRANE', 'success');
+                fetchQueue();
+            } else if (res.status === 429) {
+                showToast('Zbyt wiele zapytań – poczekaj chwilę', 'error');
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showToast(data.message || `Błąd (${res.status})`, 'error');
+            }
+        } catch (err) {
+            console.error("Błąd zmiany statusu:", err);
+            showToast('Błąd sieci', 'error');
+        }
     }
 
     // Walidacja URL (zapobieganie open redirect)
@@ -481,20 +519,59 @@
     async function removeFromQueue(id) {
         if (!confirm('Usunąć piosenkę z kolejki?')) return;
 
+        const adminHeaders = adminAuthenticated ? { 'X-Admin-Auth': 'true' } : {};
         try {
-            const res = await fetch(`/api/queue/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/queue/${id}`, {
+                method: 'DELETE',
+                headers: adminHeaders
+            });
             if (res.ok) {
                 showToast('Usunięto z kolejki', 'success');
                 fetchQueue();
             } else if (res.status === 429) {
                 showToast('Zbyt wiele zapytań', 'error');
             } else {
-                showToast('Błąd usuwania', 'error');
+                const data = await res.json().catch(() => ({}));
+                showToast(data.message || `Błąd usuwania (${res.status})`, 'error');
             }
         } catch (err) {
             console.error("Błąd usuwania:", err);
             showToast('Błąd sieci', 'error');
         }
+    }
+
+    // Modal logowania admina – zwraca hasło lub null (anulowano)
+    function showAdminLoginModal() {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('adminLoginModal');
+            const input = document.getElementById('adminPasswordInput');
+            const confirmBtn = document.getElementById('adminLoginConfirm');
+            const cancelBtn = document.getElementById('adminLoginCancel');
+
+            const cleanup = () => {
+                modal.style.display = 'none';
+                input.value = '';
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                input.onkeydown = null;
+            };
+
+            modal.style.display = 'flex';
+            input.focus();
+
+            const submit = () => {
+                const val = input.value.trim();
+                cleanup();
+                resolve(val || null);
+            };
+
+            confirmBtn.onclick = submit;
+            cancelBtn.onclick = () => { cleanup(); resolve(null); };
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') submit();
+                if (e.key === 'Escape') { cleanup(); resolve(null); }
+            };
+        });
     }
 </script>
 </body>

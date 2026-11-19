@@ -269,9 +269,33 @@ public class KaraokeService {
         Song song = allSongsMap.get(songId);
         if (song == null) return null;
 
+        // Ograniczenie: maksymalnie 2 piosenki pod rządem na jedno imię
+        // Sprawdź 2 ostatnie aktywne/oczekujące piosenki (nie FINISHED) z tym samym imieniem
+        String normalizedName = normalizeNameForComparison(userName);
+        long sameNameCount = queue.stream()
+                .filter(item -> !"FINISHED".equals(item.getStatus()))
+                .filter(item -> normalizeNameForComparison(item.getUserName()).equals(normalizedName))
+                .count();
+
+        if (sameNameCount >= 2) {
+            throw new IllegalArgumentException(
+                    "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. " +
+                    "Poczekaj chwilę, aż kto inny doda swój utwór!"
+            );
+        }
+
         QueueItem item = new QueueItem(queueIdGenerator.getAndIncrement(), userName.trim(), song);
         queue.add(item);
         return item;
+    }
+
+    /**
+     * Normalizacja imienia do porównania: lowercase, usunięcie nadmiarowych spacji.
+     * Zapobiega podwójnemu zamawianiu pod "Jan" / "  Jan  " / "jan".
+     */
+    private String normalizeNameForComparison(String name) {
+        if (name == null) return "";
+        return name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
     }
 
     public List<QueueItem> getQueue() {

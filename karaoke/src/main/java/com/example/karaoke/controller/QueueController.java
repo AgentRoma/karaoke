@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/queue")
@@ -19,15 +20,22 @@ public class QueueController {
 
     // Dodawanie piosenki do kolejki (POST /api/queue?songId=...&userName=...)
     @PostMapping
-    public ResponseEntity<QueueItem> addToQueue(
+    public ResponseEntity<?> addToQueue(
             @RequestParam Long songId,
             @RequestParam String userName) {
 
-        QueueItem item = karaokeService.addToQueue(songId, userName);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            QueueItem item = karaokeService.addToQueue(songId, userName);
+            if (item == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            return ResponseEntity.ok(item);
+        } catch (IllegalArgumentException e) {
+            // Błąd biznesowy – np. limit 2 piosenek na imię
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "application/json")
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
-        return ResponseEntity.ok(item);
     }
 
     // Pobieranie listy kolejki (GET /api/queue)
@@ -36,19 +44,48 @@ public class QueueController {
         return karaokeService.getQueue();
     }
 
-    // Zmiana statusu piosenki (PUT /api/queue/{id}/status?status=PLAYING)
+    // Zmiana statusu piosenki (PUT /api/queue/{id}/status?status=PLAYING) – tylko admin
     @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
+    public ResponseEntity<Map<String, Object>> updateStatus(
+            @RequestHeader(value = "X-Admin-Auth", required = false) String adminAuth,
             @PathVariable Long id,
             @RequestParam String status) {
+
+        if (!"true".equals(adminAuth)) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "Brak autoryzacji administratora"
+            ));
+        }
+        if (id == null || status == null || status.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Brak id lub statusu"
+            ));
+        }
         karaokeService.updateStatus(id, status);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("success", true, "message", "Status zaktualizowany"));
     }
 
-    // Usuwanie z kolejki (DELETE /api/queue/{id})
+    // Usuwanie z kolejki (DELETE /api/queue/{id}) – tylko admin
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> removeFromQueue(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> removeFromQueue(
+            @RequestHeader(value = "X-Admin-Auth", required = false) String adminAuth,
+            @PathVariable Long id) {
+
+        if (!"true".equals(adminAuth)) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "Brak autoryzacji administratora"
+            ));
+        }
+        if (id == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Brak id"
+            ));
+        }
         karaokeService.removeFromQueue(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("success", true, "message", "Usunięto z kolejki"));
     }
 }
