@@ -1,0 +1,41 @@
+# Build artifacts
+target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.eclipse/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+~/.m2/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Secrets (should never be in repo anyway)
+*.pem
+*.key
+*.crt
+.env
+*.env.local
