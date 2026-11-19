@@ -384,7 +384,7 @@
             } else if (res.status === 400) {
                 // 400 = błąd walidacji (np. limit 2 piosenek na imię)
                 const data = await res.json().catch(() => ({}));
-                showToast(data.message || "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. Poczekaj, aż kto inny doda swój utwór!", 'error');
+                showToast(data.message || "Możesz Ordering maksymalnie 2 piosenki pod rządem na jedno imię. Poczekaj chwilę, aż kto inny doda swój utwór!", 'error');
             } else {
                 showToast("Błąd podczas dodawania piosenki.", 'error');
             }
@@ -470,7 +470,7 @@
     }
 
     // Odtwarzanie piosenki (admin)
-    function playSong(id, songUrl) {
+    async function playSong(id, songUrl) {
         const targetUrl = (songUrl && songUrl.startsWith('http') && isSafeUrl(songUrl))
             ? songUrl
             : 'https://www.google.com';
